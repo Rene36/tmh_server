@@ -1,0 +1,8 @@
+test/__pycache__/*
+tmh_server/__pycache__/*
+
+anlagenstammdaten/*
+devops/*
+configs/*
+main.py
+*.ipynb

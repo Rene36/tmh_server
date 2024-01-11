@@ -1,0 +1,47 @@
+{
+    "fl_params":
+    {
+     "server_address": "172.24.32.3",
+     "fl": {
+            "rounds": 20,
+            "fraction_fit": 1.0,
+            "min_fit_clients": 2,
+            "min_available_clients": 2,
+            "DP": "False"
+            }
+    },
+    "training_params":
+    {
+     "python_exec": "/home/ubuntu/flwr_systems/venv/flwr/bin/python3",
+     "data": {
+              "csv": {"use": "True",
+                      "label": "MotorPosition[12] (A12)",
+                      "features": ["MotorPosition[23] (A23)", "Velo_RPM[23] (A23)"],
+                      "to_dataloader": "False",
+                      "batch_size": 64,
+                      "separator": "tab"},
+              "dataloader": {"use": "False",
+                             "dataset": "c2",
+                             "batch_size": 32}
+             },
+     "model": {
+               "CIFAR10CNN": {"run": "False",
+                              "learning_rate": 0.01,
+                              "momentum": 0.9},
+               "C2CNNLSTM": {"run": "True",
+                             "input_size": 1,
+                             "output_size": 1,
+                             "hidden_size": 3,
+                             "num_layers": 200,
+                             "learning_rate": 0.01},
+               "Lasso": {"run": "False",
+                         "warm_start": "False",
+                         "max_iter": 1},
+               "LogisticRegression": {"run": "False",
+                                      "warm_start": "True",
+                                      "max_iter": 1,
+                                      "penlaty": "l2"},
+               "LinearRegression": {"run": "False"}
+               }
+    }
+}
