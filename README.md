@@ -8,6 +8,7 @@ This README explains all steps required to collect, process, and query informati
   - [Deploy Virtual Machine](#vm_deploy)
   - [Initialize Virtual Machine](#vm_init)
   - [Configure Database](#database_init)
+  - [Python Virtual Environment](#environment)
 - [Example Code](#example_code)
 - [Open End Question](#open_end_question)
 
@@ -71,19 +72,32 @@ Check if you have Ansible installed by running `ansible --help` in the terminal.
 [Go to top of README](#title)
 
 ### Configure Database <a name="database_init"></a>
-Set up a PostgreSQL database with two users. First, connect to PostgreSQL `sudo -u postgres psql` and list all available users with their respective priviliges `\du` / `SELECT * FROM information_schema.role_table_grants WHERE grantee='user_name';` or without their priviliges `SELECT usename from pg_catalog.pg_user;`. Create new users if no suitable users already exist for the server and client `CREATE USER tmh_type WITH ENCRYPTED PASSWORD 'tmh_type';`:
+Either install PostgreSQL database on machine with above Ansible playbook or install manually with this [installation guide](https://www.postgresql.org/download/linux/ubuntu/).
 
-1. type=server: User to read and write data into an existing database
+Set up a PostgreSQL database with two users. First, connect to PostgreSQL `sudo -u postgres psql` and list all available users with their respective priviliges `\du` / `SELECT * FROM information_schema.role_table_grants WHERE grantee='user_name';` or without their priviliges `SELECT usename from pg_catalog.pg_user;`. Create new users if no suitable users already exist for the server and client `CREATE USER tmh_type WITH ENCRYPTED PASSWORD 'tmh_<type>';`:
+
+1. type=server: User to read and write data into an existing database (e.g., `CREATE USER tmh_server WITH ENCRYPTED PASSWORD 'tmh_server';`)
 2. type=client: User with read-only access
 
 Preparing database and tables:
 1. Create database `SELECT 'CREATE DATABASE curtailment_tennet' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'curtailment_tennet')\gexec`
 2. Connect to new database `\c curtailment_tennet`
 3. Create table: `CREATE TABLE IF NOT EXISTS curtailments (start_curtailment TIMESTAMP, end_curtailment TIMESTAMP, duration SMALLINT, level SMALLINT, cause VARCHAR, plant_id VARCHAR, operator VARCHAR, power_nominal numeric, power_curtailed numeric, energy_curtailed numeric);`
-4. Change user priviliges <br>
+4. Change user priviliges: <br>
 4.1 Give server and client read access `GRANT SELECT ON TABLE curtailments TO tmh_<type>;` <br>
 4.2 Give server write access `GRANT INSERT ON TABLE curtailments TO tmh_server;`
 4.3 Give server truncate access `GRANT TRUNCATE ON TABLE curtailments TO tmh_server;`
+
+[Go to top of README](#title)
+
+## Python Virtual Environment <a name="environment"></a>
+Check out the above instructions on how to start a new virtual machine with Terraform and to initialize it with Ansible. Otherwise run the following commands to install everything needed to create a new Python virtual environment:
+1. `sudo apt update && sudo apt upgrade -y`
+2. `sudo apt install python3-venv python3-pip -y`
+3. `python3 -m venv name_of_venv`
+4. `. name_of_venv/bin/activate`
+5. `pip install wheel && pip install --upgrade pip`
+6. `pip install git+https://github.com/Rene36/tmh_server`
 
 [Go to top of README](#title)
 
