@@ -7,8 +7,9 @@ This README explains all steps required to collect, process, and query informati
   - [Configure Database](#database_init)
 - [Example Code](#example_code)
 - [Assumptions](#assumptions)
+- [Open End Question](#open_end_question)
 
-## Setting Up The Environment <a name="environment></a>
+## Setting Up The Environment <a name="environment"></a>
 Operating system: Ubuntu 22.04 LTS
 
 ### Deploy Virtual Machine <a name="vm_deploy"></a>
@@ -41,8 +42,7 @@ Check if you have Ansible installed by running `ansible --help` in the terminal.
 
 
 ### Configure Database <a name="database_init"></a>
-Set up a PostgreSQL database with two users. First, connect to PostgreSQL `sudo -u postgres psql` and list all available users with their respective priviliges `\du` / `SELECT * FROM information_schema.role_table_grants WHERE grantee='user_name'`
-;` or without their priviliges `SELECT usename from pg_catalog.pg_user;`. Create new users if no suitable users already exist for the server and client `CREATE USER tmh_type WITH ENCRYPTED PASSWORD 'tmh_type';`:
+Set up a PostgreSQL database with two users. First, connect to PostgreSQL `sudo -u postgres psql` and list all available users with their respective priviliges `\du` / `SELECT * FROM information_schema.role_table_grants WHERE grantee='user_name';` or without their priviliges `SELECT usename from pg_catalog.pg_user;`. Create new users if no suitable users already exist for the server and client `CREATE USER tmh_type WITH ENCRYPTED PASSWORD 'tmh_type';`:
 
 1. type=server: User to read and write data into an existing database
 2. type=client: User with read-only access
@@ -142,8 +142,20 @@ if __name__ == "__main__":
     main()
 ```
 
+## Learnings <a name="learnings"></a>
+- Updating database based on integer index leads only to minor speed ups compared to varchar lookups (0.002s)
+No difference between `'BEGIN; UPDATE "curtailments" SET "power_curtailed"=%s WHERE "idx"=%s; COMMIT;'` and `UPDATE "curtailments" SET "power_curtailed"=%s WHERE "idx"=%s` in s/query
+`executemany` super slow as well
+
+- Make power_nominal and power_curtailed smallints, but ensure 
 
 ## Assumptions <a name="assumptions"></a>
 Additional information, e.g.,
 - AVACON does not exclusively operate in TenneT area
 - Add code lintering
+
+## Open End Question <a name="open_end_question"></a>
+What else can we do with the data besides plotting it?
+- Predicting it
+- Enriching it with another dataset
+- ...

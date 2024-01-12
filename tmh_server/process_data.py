@@ -32,7 +32,7 @@ class ProcessData:
                                         "end_curtailment"])
         self._sort_by_column(col_name="start_curtailment")
         self._validate_duration()
-        print(f"Data processing took {time.time() - start}")
+        print(f"Data processing took {time.time() - start}s")
 
     def get_data(self) -> pd.DataFrame:
         """

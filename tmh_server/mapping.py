@@ -22,11 +22,11 @@ class Mapping:
         self.df_db: pd.DataFrame = pd.DataFrame()
         self.df_mastr: pd.DataFrame = pd.DataFrame()
 
-    def set_df_db(self,
-                  df: pd.DataFrame) -> None:
+    def set_df(self,
+               df: pd.DataFrame) -> None:
         """
         Setter for internal variable
-        :param df: pandas dataframe, 
+        :param df: pandas dataframe, data to write to database
         """
         self.df_db: pd.DataFrame = df
 
@@ -49,14 +49,14 @@ class Mapping:
             logging.error("Column NB_Mastr_Nr not in dataframe")
             raise KeyError()
 
-        elif os.path.isfile(os.path.join(self.path_anlagenstammdaten, "nb_mastr_nr.csv")):
+        if os.path.isfile(os.path.join(self.path_anlagenstammdaten, "nb_mastr_nr.csv")):
             nb_mastr_nr: pd.DataFrame = pd.read_csv(os.path.join(self.path_anlagenstammdaten,
                                                                  "nb_mastr_nr.csv"))
             nb_mastr_nr: list = nb_mastr_nr[0].values.tolist()
             return nb_mastr_nr
-        else:
-            logging.error("No information about EEG Anlagen / plant_ids")
-            raise OSError()
+
+        logging.error("No information about EEG Anlagen / plant_ids")
+        raise OSError()
 
     def get_merged_snbs(self):
         """
@@ -85,10 +85,10 @@ class Mapping:
         """
         Map power plant IDs to their nominal power.
         """
-        if "nominal_power" in self.df_db.columns and "plant_id" in self.df_db.columns:
-            self.df_db["nominal_power"] = self.df_db["plant_id"].map(self.mapping_id_to_power)
-            # self.df_db.dropna(subset=["nominal_power"], inplace=True)
-            self.df_db["nominal_power"] = self.df_db["nominal_power"].str.replace(",", ".").astype(float)
+        if "power_nominal" in self.df_db.columns and "plant_id" in self.df_db.columns:
+            self.df_db["power_nominal"] = self.df_db["plant_id"].map(self.mapping_id_to_power)
+            self.df_db.dropna(subset=["power_nominal"], inplace=True)
+            self.df_db["power_nominal"] = self.df_db["power_nominal"].str.replace(",", ".").astype(float)
         else:
             logging.error("Columns not in dataframe")
             raise KeyError("Columns not in dataframe")
@@ -97,10 +97,10 @@ class Mapping:
         """
         Calculate curtailed power in kW.
         """
-        self.df_db["nominal_power"] = self.df_db["nominal_power"] * (100 - self.df_db["level"]) / 100
+        self.df_db["power_curtailed"] = self.df_db["power_nominal"] * (100 - self.df_db["level"]) / 100
 
     def calculate_curtailed_energy(self):
         """
         Calculate curtailed energy in kWh.
         """
-        self.df_db["energy"] = self.df_db["nominal_power"] * self.df_db["duration"] / 60
+        self.df_db["energy_curtailed"] = self.df_db["power_curtailed"] * self.df_db["duration"] / 60

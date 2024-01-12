@@ -5,13 +5,11 @@ import time
 import logging
 from io import StringIO
 
-# relative
-from tmh_server import read_file
-
 # third party
 import psycopg2
 import pandas as pd
 from psycopg2 import sql
+from tmh_server import read_file
 
 
 class PostgreSQL:
@@ -54,8 +52,11 @@ class PostgreSQL:
         """
         self.connect_to_db()
         if self.config["table_name"] in self._get_tables():
+            self._add_missing_columns_to_df()
             self._insert_in_table_copy()
             self.close_connection()
+        else:
+            raise Exception("Insertion pipeline failed")
 
     def _validate_config(self) -> bool:
         self.config: dict = read_file.json_to_dict(self.config_path,
@@ -92,6 +93,12 @@ class PostgreSQL:
 
         except psycopg2.OperationalError as e:
             logging.error(e)
+
+    def _add_missing_columns_to_df(self):
+        cols_in_table: list = self._get_table_columns()
+        for col in cols_in_table:
+            if col not in self.df.columns:
+                self.df[col] = 0
 
     def _get_tables(self,
                     public=True) -> list:
@@ -190,35 +197,11 @@ class PostgreSQL:
                                self.config["table_name"],
                                sep=";")
             self.connection.commit()
-            print(f"Storing into database took {time.time() - start}")
+            print(f"Storing into database took {time.time() - start}s")
         except psycopg2.DatabaseError as e:
             print(e)
             self.connection.rollback()
             self.connection.close()
-
-    def update_rows(self,
-                    col_to_update: str,
-                    col_condition: str) -> None:
-        """
-        ABC
-        :param col_to_update: str, name of column in database to update
-        """
-        try:
-            for _, row in self.df.iterrows():
-                query = sql.SQL("UPDATE {table} SET {field}=%s WHERE {field2}={value2}").format(
-                                table=sql.Identifier(self.config["table_name"],),
-                                field=sql.Identifier(col_to_update),
-                                field2=sql.Identifier(col_condition),
-                                value2=sql.Identifier(row[col_condition])
-                                )
-                self.cur.execute(query, (row[col_to_update],))
-                self.connection.commit()
-
-        except (psycopg2.ProgrammingError, psycopg2.DataError) as e:
-            logging.error("%s", e)
-            self.connection.rollback()
-            self.close_connection()
-            sys.exit()
 
     def close_connection(self):
         """

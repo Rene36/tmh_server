@@ -27,7 +27,7 @@ class AvaconAPI:
         self.config_keys: list = ["networkoperator", "type", "chunkNr",
                                   "param1", "op1", "startOp", "val1",
                                   "param2", "op2", "endOp", "val2"]
-        self.loop_counter: int = 0
+        self.len_reponse: int = 0
 
         # Request variables
         self.request: Request = None
@@ -40,6 +40,7 @@ class AvaconAPI:
         """
         start: int = time.time()
         if self._validate_config():
+            print("All API calls can take up to 5 minutes. Please do not cancel the process.")
             while self._data_missing():
                 self._build_request()
                 self._run_request()
@@ -47,8 +48,8 @@ class AvaconAPI:
                 self._start_to_datetime()
             print(f"API calls took {time.time() - start}s")
             return self.content
-        else:
-            print("failed")
+        logging.error("failed")
+        raise Exception("failed")
 
     def _validate_config(self) -> bool:
         self.config: dict = read_file.json_to_dict(self.config_path,
@@ -88,12 +89,15 @@ class AvaconAPI:
     def _extract_content(self) -> pd.DataFrame:
         df: pd.DataFrame = pd.read_csv(io.StringIO(self.response.content.decode("utf-8")),
                                        sep=";")
+        self.len_reponse = df.shape[0]
         df.columns = df.columns.str.replace('"', "")
         if self.content.empty:
             self.content = df
+            print(f"Extracted {df.shape} data points from API")
         else:
             self.content = pd.concat([self.content, df], ignore_index=True, sort=False)
-            print(f"Extracted {self.content.shape} data points from API")
+            self.content.drop_duplicates(subset=["ID"], inplace=True)
+            print(f"Extracted {df.shape} data points from API")
 
     def _start_to_datetime(self):
         if "Start" in self.content.columns:
@@ -109,10 +113,16 @@ class AvaconAPI:
             raise KeyError(f"Start not in data frame columns {self.content.columns}")
 
     def _data_missing(self) -> bool:
-        self.loop_counter += 1
+        try:
+            end: datetime = datetime.strptime(self.config["val2"], "%Y-%m-%d")
+            end += timedelta(hours=23, minutes=59, seconds=59)
+        except ValueError:
+            end: datetime = datetime.strptime(self.config["val2"], "%Y-%m-%d %H:%M:%S")
+
         if self.content.empty:
             return True
-        if self.content.iloc[-1]["Start"] <= datetime.strptime(self.config["val2"], "%Y-%m-%d") - timedelta(days=1) and self.loop_counter <= 4:
+        if self.content.iloc[-1]["Start"] <= end and self.len_reponse >= 99999:
             self.config["val1"] = self.content.iloc[-1]["Start"].strftime("%Y-%m-%d")
+            print("New start:", self.config["val1"])
             return True
         return False
