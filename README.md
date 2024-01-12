@@ -1,4 +1,4 @@
-# The Mobility House Coding Challenge
+# The Mobility House Coding Challenge <a name="title"></a>
 This README explains all steps required to collect, process, and query information about curtailment of power generation in the balance zone of the transmission system operator (TSO) TenneT GmbH in Germany. Data ranges from 1st of January 2022 to 31th of December 2022.
 
 - [Explanations](#explanations)
@@ -13,6 +13,8 @@ This README explains all steps required to collect, process, and query informati
 
 ## Explanations <a name="explanations"></a>
 The task is to extract data from two different data sources (1. Abgeschlossene Maßnahmen, 2. EEG-Analgenstammdaten), merge them with each other based on their "EEG Anlagenschlüssel" and lastly, calculate the curtailed power and energy.
+
+[Go to top of README](#title)
 
 ### Dataset <a name="dataset"></a>
 However, none of those two datasets contain information about the nominal power of each power plant. Additionally, only the first dataset dates back to 2020 or 2021. The provided [link](https://www.netztransparenz.de/EEG/Anlagenstammdaten) for the 2nd dataset only points to data for 2022. I did not receive a response from the website provider to my request about how to access the data from 2020 or 2021. Therefore, I test my solution with data from 2022.
@@ -30,6 +32,8 @@ The goal is to give all users working on the database as few priviliges as neces
 - Updating by using integer index for the `WHERE` condition instead of the plant_id column, which is `VARCHAR` (e.g., `UPDATE "curtailments" SET "power_curtailed"=%s WHERE "idx"=%`)
 
 Further improvments include using smaller data types for the columns where applicable. For example, `SMALLINT` for power_nominal instead of `NUMERIC`. However, this requires checks before writing anything to the database to avoid errors.
+
+[Go to top of README](#title)
 
 ## Setting Up The Environment <a name="environment"></a>
 Operating system: Ubuntu 22.04 LTS
@@ -52,6 +56,8 @@ on_vms.tf:
 4. `tearraform show` to get IP address of deployed virtual machine, which is requried for the next step
 5. `terraform destroy -var-file=config.tfvars` (optional)
 
+[Go to top of README](#title)
+
 ### Initialize Virtual Machine <a name="vm_init"></a>
 Check if you have Ansible installed by running `ansible --help` in the terminal. If Ansible is not installed on your machine follow the install guide from [Ansible Documentation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html). We install all required programs and packages on the previously deployed virtual machine via Ansible playbooks.
 
@@ -62,6 +68,7 @@ Check if you have Ansible installed by running `ansible --help` in the terminal.
 5. Copy files to virtual machine: `ansible-playbook copy_files.yml --extra-vars '{"path_to_files": "path/to/files/with/trailing/backslash/"}'`
 6. Install Python virtual environments for type= server or client: `ansible-playbook prepare_virtualenv.yml --extra-vars '{"type": "server"}'`
 
+[Go to top of README](#title)
 
 ### Configure Database <a name="database_init"></a>
 Set up a PostgreSQL database with two users. First, connect to PostgreSQL `sudo -u postgres psql` and list all available users with their respective priviliges `\du` / `SELECT * FROM information_schema.role_table_grants WHERE grantee='user_name';` or without their priviliges `SELECT usename from pg_catalog.pg_user;`. Create new users if no suitable users already exist for the server and client `CREATE USER tmh_type WITH ENCRYPTED PASSWORD 'tmh_type';`:
@@ -77,6 +84,8 @@ Preparing database and tables:
 4.1 Give server and client read access `GRANT SELECT ON TABLE curtailments TO tmh_<type>;` <br>
 4.2 Give server write access `GRANT INSERT ON TABLE curtailments TO tmh_server;`
 4.3 Give server truncate access `GRANT TRUNCATE ON TABLE curtailments TO tmh_server;`
+
+[Go to top of README](#title)
 
 ## Example Code <a name="example_code"></a>
 ```
@@ -162,6 +171,8 @@ if __name__ == "__main__":
     main()
 ```
 
+[Go to top of README](#title)
+
 ## Open End Question <a name="open_end_question"></a>
 What can we do with the information about curtailed power and energy of specific power plants in a given region:
 1. Identify patterns in time, type of power plant and location <br>
@@ -172,3 +183,5 @@ What can we do with the information about curtailed power and energy of specific
 3. Enriching our dataset with electricity consumption to better understand the relations between curtailments and consumption. For example, peak-demand times (e.g., in the morning and evening or during large events such as festivals) are less prone for curtailments.
 4. Trying to predict curtailed power and energy with linear regression and machine learning (ML) models by using weather, consumption, and information about the power grid as features / inputs. One could develop physically-informed ML models to consider grid transmission constraints.
 5. Look abroad: Energy is bought where it is cheap. When France or Norway produce cheap electricity with their nuclear and hydro power plants, respectively, local power plants might be more prone for curtailments. This works both ways. For example, last year during summer France had to reduce the output of their nucelar power plants due to too warm river water and Norway produced less with their hydro power due to too low reservoir levels.
+
+[Go to top of README](#title)
