@@ -6,3 +6,4 @@ devops/*
 configs/*
 main.py
 *.ipynb
+*.log

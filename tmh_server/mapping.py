@@ -63,7 +63,7 @@ class Mapping:
         Read merged data from all SNBs.
         """
         self.df_mastr: pd.DataFrame = pd.read_csv(os.path.join(self.path_anlagenstammdaten,
-                                                               "mastr_2022.csv"),
+                                                               "mastr_2022_simplified.csv"),
                                                   sep=";",
                                                   usecols=["EEG-Anlagenschlüssel",
                                                            "Nettonennleistung der Einheit"])
