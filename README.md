@@ -1,5 +1,5 @@
 # The Mobility House Coding Challenge <a name="title"></a>
-This README explains all steps required to collect, process, and query information about curtailment of power generation in the balance zone of the transmission system operator (TSO) TenneT GmbH in Germany. Data ranges from 1st of January 2022 to 31th of December 2022.
+This README explains all steps required to collect, process, and query information about curtailment of power generation in the balance zone of the transmission system operator (TSO) TenneT GmbH in Germany. Data ranges from 1st of January 2022 to 31st of December 2022.
 
 - [Explanations](#explanations)
   - [Dataset](#dataset)
@@ -8,7 +8,7 @@ This README explains all steps required to collect, process, and query informati
   - [Deploy Virtual Machine](#vm_deploy)
   - [Initialize Virtual Machine](#vm_init)
   - [Configure Database](#database_init)
-  - [Python Virtual Environment](#environment)
+  - [Python Virtual Environment](#python_environment)
 - [Example Code](#example_code)
 - [Open End Question](#open_end_question)
 
@@ -90,7 +90,7 @@ Preparing database and tables:
 
 [Go to top of README](#title)
 
-## Python Virtual Environment <a name="environment"></a>
+## Python Virtual Environment <a name="python_environment"></a>
 Check out the above instructions on how to start a new virtual machine with Terraform and to initialize it with Ansible. Otherwise run the following commands to install everything needed to create a new Python virtual environment:
 1. `sudo apt update && sudo apt upgrade -y`
 2. `sudo apt install python3-venv python3-pip -y`
