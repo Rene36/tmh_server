@@ -9,6 +9,7 @@ This README explains all steps required to collect, process, and query informati
   - [Initialize Virtual Machine](#vm_init)
   - [Configure Database](#database_init)
   - [Python Virtual Environment](#python_environment)
+- [Directory Structure](#dir_structure)
 - [Example Code](#example_code)
 - [Open End Question](#open_end_question)
 
@@ -98,6 +99,19 @@ Check out the above instructions on how to start a new virtual machine with Terr
 4. `. name_of_venv/bin/activate`
 5. `pip install wheel && pip install --upgrade pip`
 6. `pip install git+https://github.com/Rene36/tmh_server`
+
+[Go to top of README](#title)
+
+## Directory Structure <a name="dir_structure"></a>
+
+|- server/ <br>
+&emsp;|- main.py <br>
+&emsp;|- anlagenstammdaten/ <br>
+&emsp;|&emsp;|- SNBs/ <br>
+&emsp;|&emsp;|- mastr_2022_simplified.csv <br>
+&emsp;|- configs/ <br>
+&emsp;&emsp;| avacon_api.json <br>
+&emsp;&emsp;| query.json <br>
 
 [Go to top of README](#title)
 
