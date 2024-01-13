@@ -9,7 +9,7 @@ This README explains all steps required to collect, process, and query informati
   - [Initialize Virtual Machine](#vm_init)
   - [Configure Database](#database_init)
   - [Python Virtual Environment](#python_environment)
-- [Directory Structure](#dir_structure)
+- [Directory Structure To Run Example](#dir_structure)
 - [Example Code](#example_code)
 - [Open End Question](#open_end_question)
 
@@ -26,7 +26,7 @@ I scrapped the [Marktstammdatenregister](https://www.marktstammdatenregister.de/
 The data should also focus on the balance zone of TenneT GmbH. However, the provided example [request](https://redispatch-run.azurewebsites.net/api/export/csv?&networkoperator=ava&type=finished&rderDirection=desc&orderBy=start&chunkNr=1&param1=start&op1=gt&startOp=gt&val1=2022-04-01&param2=end&op2=equals&endOp=eq&val2=2022-08-31) to obtain dataset 1 via the API uses the network operator Avacon. This network operator operates also outside of TenneTs balance zone (e.g., Nordrhein-Westfalen). Nevertheless, to reduce complexity I stick to this network operator.
 
 ### Database <a name="database"></a>
-The goal is to give all users working on the database as few priviliges as necessary. For example, the client-side plotting the data only needs read access. For the server-side I first limited its privileges to read (SELECT) and write (INSERT). However, I had througput and latency issues with updating the database. As a work around I therefore gave the server also delete (TRUNCATE) rights to replace the entire database instead of updating only a few columns. This needs further improvments for production systems to avoid false reads from clients while working with the database. I tried the following approaches to update the table, but all of them requried more than a few seconds execution time:
+The goal is to give all users working on the database as few priviliges as necessary. For example, the client-side plotting the data only needs read access. For the server-side I first limited its privileges to read (SELECT) and write (INSERT). However, I had througput and latency issues with updating the database. As a work around, I therefore gave the server also delete (TRUNCATE) rights to replace the entire database instead of updating only a few columns. This needs further improvements for production systems to avoid false reads from clients while working with the database. I tried the following approaches to update the table, but all of them required multiple minutes of execution time:
 
 - Updating and commiting in a for-loop
 - Updating in a for-loop and only commit every 10,000th entry
@@ -48,7 +48,7 @@ config.tfvars:
 - ON_PASSWD
 - ON_GROUP
 
-on_vms.tf:
+infra.tf:
 - endpoint
 - flowpoint
 
@@ -63,7 +63,7 @@ on_vms.tf:
 ### Initialize Virtual Machine <a name="vm_init"></a>
 Check if you have Ansible installed by running `ansible --help` in the terminal. If Ansible is not installed on your machine follow the install guide from [Ansible Documentation](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html). We install all required programs and packages on the previously deployed virtual machine via Ansible playbooks.
 
-1. Define IP address(es) by using a host group (e.g., in /etc/ansible/hosts) and refering to it in the playbooks
+1. Define IP address(es) by using a host group (e.g., in /etc/ansible/hosts) and refer to it in the playbooks
 2. Adjust host group in all following YAML files
 3. Update virtual machine: `ansible-playbook udpate.yml`
 4. Install PostgreSQL: `ansible-playbook postgres_install.yml`
@@ -73,12 +73,12 @@ Check if you have Ansible installed by running `ansible --help` in the terminal.
 [Go to top of README](#title)
 
 ### Configure Database <a name="database_init"></a>
-Either install PostgreSQL database on machine with above Ansible playbook or install manually with this [installation guide](https://www.postgresql.org/download/linux/ubuntu/).
+Either install PostgreSQL database on the machine with the above Ansible playbooks or install manually with this [installation guide](https://www.postgresql.org/download/linux/ubuntu/).
 
-Set up a PostgreSQL database with two users. First, connect to PostgreSQL `sudo -u postgres psql` and list all available users with their respective priviliges `\du` / `SELECT * FROM information_schema.role_table_grants WHERE grantee='user_name';` or without their priviliges `SELECT usename from pg_catalog.pg_user;`. Create new users if no suitable users already exist for the server and client `CREATE USER tmh_type WITH ENCRYPTED PASSWORD 'tmh_<type>';`:
+Set up a PostgreSQL database with two users. First, connect to PostgreSQL `sudo -u postgres psql` and list all available users with their respective priviliges `\du` / `SELECT * FROM information_schema.role_table_grants WHERE grantee='user_name';` or without their priviliges `SELECT usename from pg_catalog.pg_user;`. Create new users if no suitable users already exist for the server and client `CREATE USER tmh_<type> WITH ENCRYPTED PASSWORD 'tmh_<type>';`:
 
-1. type=server: User to read and write data into an existing database (e.g., `CREATE USER tmh_server WITH ENCRYPTED PASSWORD 'tmh_server';`)
-2. type=client: User with read-only access
+1. type=server: User to read and write data into an existing database (here: `CREATE USER tmh_server WITH ENCRYPTED PASSWORD 'tmh_server';`)
+2. type=client: User with read-only access (here: `CREATE USER tmh_client WITH ENCRYPTED PASSWORD 'tmh_client';`)
 
 Preparing database and tables:
 1. Create database `SELECT 'CREATE DATABASE curtailment_tennet' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'curtailment_tennet')\gexec`
@@ -86,7 +86,7 @@ Preparing database and tables:
 3. Create table: `CREATE TABLE IF NOT EXISTS curtailments (start_curtailment TIMESTAMP, end_curtailment TIMESTAMP, duration SMALLINT, level SMALLINT, cause VARCHAR, plant_id VARCHAR, operator VARCHAR, power_nominal numeric, power_curtailed numeric, energy_curtailed numeric);`
 4. Change user priviliges: <br>
 4.1 Give server and client read access `GRANT SELECT ON TABLE curtailments TO tmh_<type>;` <br>
-4.2 Give server write access `GRANT INSERT ON TABLE curtailments TO tmh_server;`
+4.2 Give server write access `GRANT INSERT ON TABLE curtailments TO tmh_server;` <br>
 4.3 Give server truncate access `GRANT TRUNCATE ON TABLE curtailments TO tmh_server;`
 
 [Go to top of README](#title)
@@ -102,10 +102,10 @@ Check out the above instructions on how to start a new virtual machine with Terr
 
 [Go to top of README](#title)
 
-## Directory Structure <a name="dir_structure"></a>
+## Directory Structure To Run Example <a name="dir_structure"></a>
 
 |- server/ <br>
-&emsp;|- main.py <br>
+&emsp;|- main.py (see below example code)<br>
 &emsp;|- anlagenstammdaten/ <br>
 &emsp;|&emsp;|- SNBs/ <br>
 &emsp;|&emsp;|- mastr_2022_simplified.csv <br>
@@ -205,11 +205,13 @@ if __name__ == "__main__":
 What can we do with the information about curtailed power and energy of specific power plants in a given region:
 1. Identify patterns in time, type of power plant and location <br>
 1.1 Time: Is wind power mostly curtailed at night or in the winter? Are PV fields curtailed at peak sun? <br>
-1.2 Type of power: Are wind power plants curtailed more often than PV fields due to their large nominal power? It might be more efficient to shutdown one winder power plant with 5 MW instead of a bunch of PVs. <br>
+1.2 Type of power: Are wind power plants curtailed more often than PV fields due to their large nominal power? It might be more efficient to shutdown one wind power plant with 5 MW instead of a bunch of PVs. <br>
 1.3 Location: Identify bottlenecks in the grid by using power plants, which are more often curtailed then others of the same type. For example, I scrapped information about the postal code as well allowing to visualize the type of curtailments over time on a map. 
-2. Enriching our dataset with weather data (e.g., sun irradation, temperature) to better understand the relation between curtailements and weather. For example, high irradation can lead to a higher chance of being curtailed for PV fields.
+2. Enriching our dataset with weather data (e.g., sun irradation, temperature) to better understand the relation between curtailments and weather. For example, high irradation can lead to a higher chance of being curtailed for PV fields.
 3. Enriching our dataset with electricity consumption to better understand the relations between curtailments and consumption. For example, peak-demand times (e.g., in the morning and evening or during large events such as festivals) are less prone for curtailments.
-4. Trying to predict curtailed power and energy with linear regression and machine learning (ML) models by using weather, consumption, and information about the power grid as features / inputs. One could develop physically-informed ML models to consider grid transmission constraints.
-5. Look abroad: Energy is bought where it is cheap. When France or Norway produce cheap electricity with their nuclear and hydro power plants, respectively, local power plants might be more prone for curtailments. This works both ways. For example, last year during summer France had to reduce the output of their nucelar power plants due to too warm river water and Norway produced less with their hydro power due to too low reservoir levels.
+4. Trying to predict curtailed power and energy with linear regression and machine learning (ML) models by using weather, consumption, and information about the power grid as features / inputs. One could develop physically-informed ML models to consider grid transmission constraints. <br>
+4.1 LSTM: Past values of the weather and curtailments impact the behavior of future values. Therefore, a ML model such as an LSTM might increase prediction performs due to considering the past <br>
+4.2 Lasso regression: Linear regression models are powerful and especially computation-efficient. Before using ML techniques one should test simpler prediction models first. For example, the Lasso regression model outperformed a CNN in my recent [publication](https://dl.acm.org/doi/10.1145/3626562.3626829) 
+5. Look abroad: Energy is bought where it is cheap. When France or Norway produce cheap electricity with their nuclear and hydro power plants, respectively, local power plants might be more prone for curtailments. This works both ways. For example, last year during summer France had to reduce the output of their nuclear power plants due to too warm river water and Norway produced less with their hydro power due to too low reservoir levels.
 
 [Go to top of README](#title)
