@@ -1,0 +1,54 @@
+--- 
+- hosts: tmh
+  name: Prepare Python virtual environment
+  become: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    remote_home: "{{ ansible_env.HOME }}"
+
+  tasks:
+    - name: Install virtualenv dependencies
+      become: true
+      apt:
+        name: python3-venv
+        update_cache: yes
+        
+    - name: Install pip3
+      become: true
+      apt:
+        name: 
+        - python3-pip
+        update_cache: yes
+        
+    - name: Install virtualenv package
+      pip:
+        name: virtualenv
+
+    - name: Create virtualenv directory
+      file:
+        path: "{{ remote_home }}/coding_challenge/venv"
+        state: directory
+        
+    - name: Create virtualenv for tmh
+      shell: "/usr/bin/python3 -m venv tmh_{{ type }}"
+      args:
+        chdir: "{{ remote_home }}/coding_challenge/venv"
+
+    - name: Install package wheel
+      pip:
+        name: wheel
+        virtualenv: "{{ remote_home }}/coding_challenge/venv/tmh_{{ type }}"
+        
+    - name: pip self-update
+      pip:
+        name: pip        
+        state: latest
+        virtualenv: "{{ remote_home }}/coding_challenge/venv/tmh_{{ type }}"
+
+    - name: Install Python requirements
+      tags: requirements
+      ansible.builtin.pip:
+        requirements: "{{ remote_home }}/coding_challenge/{{ type }}/requirements.txt"
+        extra_args: --no-cache-dir
+        virtualenv: "{{ remote_home }}/coding_challenge/venv/tmh_{{ type }}"
+

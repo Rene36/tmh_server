@@ -1,0 +1,16 @@
+--- 
+- hosts: tmh
+  name: Install Python packages to rpc virtualenv
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  vars_files:
+     - gitlab_credentials.yml
+
+  tasks:
+    - name: Install psycopg2 dependencies
+      become: true
+      apt:
+        name: 
+        - libpq-dev 
+        - python3-dev
+

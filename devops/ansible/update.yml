@@ -1,0 +1,13 @@
+--- 
+- hosts: tmh
+  name: Update all apt packages
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  become: true
+  
+  tasks: 
+    - name: Update and upgrade
+      apt: 
+        upgrade: yes
+        update_cache: yes
+

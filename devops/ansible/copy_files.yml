@@ -1,0 +1,23 @@
+--- 
+- hosts: tmh
+  name: Copy files
+  become: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    remote_home: "{{ ansible_env.HOME }}"
+
+  tasks:
+    - name: Create directory
+      file:
+        path: "{{ remote_home }}/coding_challenge"
+        state: directory
+        
+    - name: Copy files
+      tags: files
+      synchronize:
+        src: "{{ path_to_files }}"
+        group: no
+        dest: "{{ remote_home }}/coding_challenge"
+        rsync_opts:
+          - "--exclude=test"
+

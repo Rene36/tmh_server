@@ -45,7 +45,7 @@ class MastrScrapper:
             netloc="www.marktstammdatenregister.de",
             path="/MaStR/Einheit/Einheiten/ErweiterteOeffentlicheEinheitenuebersicht",
             params="",
-            query=f"filter=Inbetriebnahmedatum%20der%20EEG-Anlage~lt~%2701.01.2021%27~and~MaStR-Nr.%20des%20Anschluss-Netzbetreibers~ct~%27{self.nb_mastr_nr}%27",
+            query=f"filter=Inbetriebnahmedatum%20der%20EEG-Anlage~lt~%2701.01.2023%27~and~MaStR-Nr.%20des%20Anschluss-Netzbetreibers~ct~%27{self.nb_mastr_nr}%27",
             fragment="",
         ))
         self.url: str = url.replace("/;", "")
@@ -118,6 +118,7 @@ class MastrScrapper:
         :param path_anlagenstammdaten: str, 
         """
         snbs_path: str = os.path.join(path_anlagenstammdaten, "SNBs")
+        df: pd.DataFrame = pd.DataFrame()
         for snb in [i for i in os.listdir(snbs_path) if ".csv" in i]:
             df_snb: pd.DataFrame = pd.read_csv(os.path.join(snbs_path, snb),
                                                sep=";")

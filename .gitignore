@@ -1,8 +1,7 @@
 test/__pycache__/*
 tmh_server/__pycache__/*
-
+devops/terraform/.terraform*
 anlagenstammdaten/*
-devops/*
 configs/*
 main.py
 *.ipynb
